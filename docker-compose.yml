@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  web:
+    build: ./bbc
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+    volumes:
+      - ./bbc/bot_constructor:/usr/src/app/bot_constructor
+    networks:
+      test_network:
+        ipv4_address: 172.16.238.10
+  
+  db:
+    image: postgres:13.0-alpine
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data/
+      
+    environment:
+      - POSTGRES_USER=alexander
+      - POSTGRES_PASSWORD=1234567890
+      - POSTGRES_DB=bbc_dev
+
+    networks:
+      test_network:
+        ipv4_address: 172.16.238.11
+    
+  bot:
+    build: ./bbc
+    command: python manage.py bot
+    ports:
+      - 8001:8001
+    env_file:
+      - ./.env.dev
+    
+    networks:
+      test_network:
+        ipv4_address: 172.16.238.12
+    
+networks:
+  test_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
